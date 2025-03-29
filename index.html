@@ -215,3 +215,19 @@
         updateLeaderboard();
     }
 </script>
+<div>
+    <h2>Sports Betting</h2>
+    <p>India vs Australia</p>
+    <button onclick="betSports('India')">India (10 coins)</button>
+    <button onclick="betSports('Australia')">Australia (10 coins)</button>
+</div>
+<script>
+    function betSports(team) {
+        if (!currentUser) return alert('Please login first.');
+        if (coins < 10) return alert('Not enough coins!');
+        coins -= 10;
+        alert(`Bet placed on ${team}!`);
+        document.getElementById('coin-count').textContent = coins;
+        updateLeaderboard();
+    }
+</script>
