@@ -1,1 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>111Basking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 { color: #333; }
+        h2 { color: #555; }
+        button { margin: 5px; padding: 8px 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; }
+        button:hover { background-color: #45a049; }
+        p { margin: 10px 0; }
+        #questions-list p, #game-section p { border: 1px solid #ccc; padding: 10px; max-width: 500px; margin: 10px auto; }
+        #login-section, #user-section, #game-section, #leaderboard { margin: 20px 0; }
+        #leaderboard table { margin: 0 auto; border-collapse: collapse; }
+        #leaderboard td, #leaderboard th { border: 1px solid #ddd; padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to 111Basking</h1>
+    <p>Your static betting hub!</p>
 
+    <!-- Login Simulation -->
+    <div id="login-section">
+        <input type="text" id="username-input" placeholder="Enter username" style="padding: 5px;">
+        <button onclick="login()">Login</button>
+    </div>
+    <div id="user-section" style="display: none;">
+        <p>Welcome, <span id="current-user"></span>! Coins: <span id="coin-count">100</span> <button onclick="logout()">Logout</button></p>
+        <button onclick="postQuestion()">Post a Question</button>
+    </div>
+
+    <!-- Questions List -->
+    <div id="questions-list">
+        <h2>Betting Questions</h2>
+        <!-- Questions will be added here -->
+    </div>
+
+    <!-- Simple Game (Coin Toss) -->
+    <div id="game-section">
+        <h2>Coin Toss Game</h2>
+        <p>Bet 10 coins!</p>
+        <button onclick="playCoinToss('heads')">Heads</button>
+        <button onclick="playCoinToss('tails')">Tails</button>
+        <p id="game-result"></p>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboard">
+        <h2>Leaderboard</h2>
+        <table>
+            <tr><th>User</th><th>Coins</th></tr>
+            <!-- Leaderboard entries will be added here -->
+        </table>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let coins = 100;
+        let questions = [
+            { text: "Will Team A win today?", resolved: false, bets: [] },
+            { text: "Will it rain this afternoon?", resolved: true, correctAnswer: false }
+        ];
+        let leaderboard = [
+            { user: "Player1", coins: 150 },
+            { user: "Player2", coins: 80 }
+        ];
+
+        // Load initial content
+        window.onload = () => {
+            loadQuestions();
+            updateLeaderboard();
+        };
+
+        // Login simulation
+        function login() {
+            const username = document.getElementById('username-input').value;
+            if (username) {
+                currentUser = username;
+                coins = 100; // Reset coins on login
+                document.getElementById('current-user').textContent = username;
+                document.getElementById('coin-count').textContent = coins;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('user-section').style.display = 'block';
+                loadQuestions();
+                updateLeaderboard();
+            } else {
+                alert('Please enter a username.');
+            }
+        }
+
+        // Logout simulation
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('user-section').style.display = 'none';
+            document.getElementById('questions-list').innerHTML = '<h2>Betting Questions</h2>';
+            document.getElementById('game-result').textContent = '';
+        }
+
+        // Post a question
+        function postQuestion() {
+            if (!currentUser) return alert('Please login first.');
+            const question = prompt('Enter your question (e.g., Will it rain today?)');
+            if (question) {
+                questions.push({ text: question, resolved: false, bets: [] });
+                loadQuestions();
+            }
+        }
+
+        // Load questions
+        function loadQuestions() {
+            const list = document.getElementById('questions-list');
+            list.innerHTML = '<h2>Betting Questions</h2>';
+            questions.forEach((q, index) => {
+                const questionHtml = `
+                    <p>
+                        ${q.text}
+                        ${!q.resolved && currentUser ? `
+                            <button onclick="bet(${index}, true)">Yes (10 coins)</button>
+                            <button onclick="bet(${index}, false)">No (10 coins)</button>
+                            <button onclick="resolveQuestion(${index})">Resolve</button>
+                        ` : q.resolved ? `(Resolved: ${q.correctAnswer ? 'Yes' : 'No'})` : ''}
+                    </p>`;
+                list.innerHTML += questionHtml;
+            });
+        }
+
+        // Place a bet
+        function bet(questionIndex, answer) {
+            if (!currentUser) return alert('Please login first.');
+            if (coins < 10) return alert('Not enough coins!');
+            coins -= 10;
+            document.getElementById('coin-count').textContent = coins;
+            questions[questionIndex].bets.push({ user: currentUser, answer: answer });
+            alert(`Bet placed on "${questions[questionIndex].text}": ${answer ? 'Yes' : 'No'}`);
+            updateLeaderboard();
+        }
+
+        // Resolve a question
+        function resolveQuestion(questionIndex) {
+            const answer = confirm('Was the answer Yes? (OK for Yes, Cancel for No)');
+            questions[questionIndex].resolved = true;
+            questions[questionIndex].correctAnswer = answer;
+            questions[questionIndex].bets.forEach(bet => {
+                if (bet.user === currentUser && bet.answer === answer) {
+                    coins += 20; // Win 20 coins for correct bet
+                }
+            });
+            document.getElementById('coin-count').textContent = coins;
+            loadQuestions();
+            updateLeaderboard();
+        }
+
+        // Coin Toss game
+        function playCoinToss(choice) {
+            if (!currentUser) return alert('Please login first.');
+            if (coins < 10) return alert('Not enough coins!');
+            coins -= 10;
+            const result = Math.random() < 0.5 ? 'heads' : 'tails';
+            const gameResult = document.getElementById('game-result');
+            if (result === choice) {
+                coins += 20; // Win 20 coins
+                gameResult.textContent = `You won! It was ${result}.`;
+            } else {
+                gameResult.textContent = `You lost! It was ${result}.`;
+            }
+            document.getElementById('coin-count').textContent = coins;
+            updateLeaderboard();
+        }
+
+        // Update leaderboard
+        function updateLeaderboard() {
+            let lb = leaderboard.filter(entry => entry.user !== currentUser);
+            if (currentUser) lb.push({ user: currentUser, coins: coins });
+            lb.sort((a, b) => b.coins - a.coins);
+            const table = document.querySelector('#leaderboard table');
+            table.innerHTML = '<tr><th>User</th><th>Coins</th></tr>';
+            lb.slice(0, 5).forEach(entry => {
+                table.innerHTML += `<tr><td>${entry.user}</td><td>${entry.coins}</td></tr>`;
+            });
+        }
+    </script>
+</body>
+</html>
